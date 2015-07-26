@@ -29,7 +29,7 @@ Pod::Spec.new do |s|
   #s.resource_bundles = {
   #  'SSPhotoKit' => ['Pod/Assets/images.xcassets']
   #}
-
+  s.resource  = "Example/Classes/images.xcassets"
   # s.public_header_files = 'Pod/Classes/**/*.h'
   s.frameworks = 'UIKit', 'Photos', 'AVFoundation'
   s.dependency 'ImagePickerSheetController', '~> 0.1.7'
