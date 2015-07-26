@@ -10,9 +10,9 @@
 Pod::Spec.new do |s|
   s.name             = "SSPhotoKit"
   s.version          = "0.1.0"
-  s.summary          = "SSPhotoKit, A Photo Picker "
+  s.summary          = "A Photo Picker "
   s.description      = <<-DESC
-                        A Photo Picker
+                        A Photo Picker for iOS8 
 
                        DESC
   s.homepage         = "https://github.com/CodeEagle/SSPhotoKit"
