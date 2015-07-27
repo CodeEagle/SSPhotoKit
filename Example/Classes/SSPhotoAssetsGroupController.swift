@@ -173,7 +173,8 @@ public class SSPhotoForbbidenView: UIView {
         CGContextFillRect(ctx, self.bounds)
         
         var ay: CGFloat = 0
-        if let lock = UIImage(named: "AssetsPickerLocked") {
+        let bundle = NSBundle(forClass: SSPhotoKit.self)
+        if let lock = UIImage(named: "AssetsPickerLocked", inBundle: bundle, compatibleWithTraitCollection: nil) {
             var image = lock.toTintColor(UIColor.darkGrayColor())
             let x = ( layer.bounds.width - lock.size.width ) / 2
             let y = ( layer.bounds.height - lock.size.height ) / 2 - 40
