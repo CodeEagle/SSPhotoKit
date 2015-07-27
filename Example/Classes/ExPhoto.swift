@@ -10,7 +10,7 @@ import UIKit
 import Photos
 import SDWebImage
 extension PHAsset {
-    var image: UIImage {
+    var image: UIImage! {
         
         let cache = SDImageCache.sharedImageCache()
         let key = self.identifier
@@ -20,7 +20,7 @@ extension PHAsset {
         
         let manager = PHImageManager.defaultManager()
         var option = PHImageRequestOptions()
-        var thumbnail = UIImage()
+        var thumbnail:UIImage! = UIImage()
         
         let scale = UIScreen.mainScreen().scale
         var asize = Config.kGroupSize
@@ -30,7 +30,9 @@ extension PHAsset {
         option.normalizedCropRect = CGRect(origin: CGPointZero, size: asize)
         option.resizeMode = .Exact
         manager.requestImageForAsset(self, targetSize: asize, contentMode: .AspectFill, options: option, resultHandler: {(result, info)->Void in
-            thumbnail = result
+            if let img = result {
+                thumbnail = img
+            }
         })
         cache.storeImage(thumbnail, forKey: key, toDisk: true)
         return thumbnail

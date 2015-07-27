@@ -76,8 +76,8 @@ public class SSPhotoGroupContentView: UIView {
             let rect = CGRectMake(CGRectGetMaxX(imageRect) + padding, y, width, size.height)
             total.drawWithRect(rect, options: .UsesLineFragmentOrigin | .UsesFontLeading, context: nil)
         }
-        
-        if let backArrow = UIImage(named: "back_normal") {
+        let bundle = NSBundle(forClass: SSPhotoKit.self)
+        if let backArrow = UIImage(named: "back_normal", inBundle: bundle, compatibleWithTraitCollection: nil) {
             let scale = UIScreen.mainScreen().scale
             let infoArrow = UIImage(CGImage: backArrow.CGImage, scale: scale * 2, orientation: UIImageOrientation.Up)
             if let smaller = infoArrow?.imageRotatedByDegrees(180, flip: false) {

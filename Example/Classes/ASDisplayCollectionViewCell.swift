@@ -17,8 +17,9 @@ public class ASDisplayCollectionViewCell: UICollectionViewCell {
     
     private var placeholder: CALayer!
     private var nodeConstructionOperation: NSOperation?
-    private var off: UIImage! = UIImage(named: "photo_check_default")
-    private var on: UIImage! = UIImage(named: "photo_check_selected")
+    static let bundle = NSBundle(forClass: SSPhotoKit.self)
+    private var off: UIImage! = UIImage(named: "photo_check_default", inBundle: ASDisplayCollectionViewCell.bundle, compatibleWithTraitCollection: nil)
+    private var on: UIImage! = UIImage(named: "photo_check_selected", inBundle: ASDisplayCollectionViewCell.bundle, compatibleWithTraitCollection: nil)
     public var bSelected: Bool = false {
         didSet {
             var img = off
@@ -81,8 +82,7 @@ public class ASDisplayCollectionViewCell: UICollectionViewCell {
         placeholder.backgroundColor = UIColor.whiteColor().CGColor
         contentView.layer.addSublayer(placeholder)
         
-        
-        checkMark = UIImageView(image: UIImage(named: "photo_check_default"))
+        checkMark = UIImageView(image: off)
         let size = self.bounds.size
         let imgSize = checkMark.bounds.size
         let x = size.width - imgSize.width - 2
