@@ -9,7 +9,7 @@
 
 Pod::Spec.new do |s|
   s.name             = "SSPhotoKit"
-  s.version          = "0.1.3"
+  s.version          = "0.1.4"
   s.summary          = "A Photo Picker "
   s.description      = <<-DESC
                         A Photo Picker for iOS8 
