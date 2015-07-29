@@ -57,6 +57,7 @@ extension SSPhotoKit {
     private func configurePhotoPreviewSheet() {
         let controller = ImagePickerSheetController()
         weak var wself: SSPhotoKit! = self
+        controller.maximumSelection = maximumNumberOfSelection
         controller.addAction(ImageAction(title: NSLocalizedString("照片图库", comment: ""), secondaryTitle: { NSString.localizedStringWithFormat(NSLocalizedString("选择%lu张", comment: ""), $0) as String }, handler: { _ in
             wself?.presentImagePickerController(.PhotoLibrary)
             }, secondaryHandler: { _, numberOfPhotos in
