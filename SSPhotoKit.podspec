@@ -32,7 +32,7 @@ Pod::Spec.new do |s|
   s.resource  = "Example/Classes/images.xcassets"
   # s.public_header_files = 'Pod/Classes/**/*.h'
   s.frameworks = 'UIKit', 'Photos', 'AVFoundation'
-  s.dependency 'ImagePickerSheetController', '~> 0.1.7'
-  s.dependency 'SSImageBrowser','~>0.1.5'
+  s.dependency 'ImagePickerSheetController'
+  s.dependency 'SSImageBrowser'
   s.dependency 'AsyncDisplayKit'
 end
