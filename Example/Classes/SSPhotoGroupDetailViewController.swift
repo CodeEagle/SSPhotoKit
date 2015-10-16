@@ -16,7 +16,7 @@ public class SSPhotoGroupDetailViewController: UIViewController {
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), { () -> Void in
                 let option = PHFetchOptions()
                 option.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.Image.rawValue)
-                self.result = PHAsset.fetchAssetsInAssetCollection(self.group, options: option)
+                self.result = PHAsset.fetchAssetsInAssetCollection(self.group!, options: option)
                 dispatch_async(dispatch_get_main_queue(), { () -> Void in
                     self.collectionView.reloadData()
                 })
@@ -84,7 +84,7 @@ extension SSPhotoGroupDetailViewController {
         return tool
     }
     
-    private func toolBarItems() -> [AnyObject] {
+    private func toolBarItems() -> [UIBarButtonItem] {
         let preview = UIBarButtonItem(title: NSLocalizedString("预览", comment: ""), style: UIBarButtonItemStyle.Plain, target: self, action: Selector("preview"))
         let fixed = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.FixedSpace, target: nil, action: nil)
         fixed.width = 20
@@ -102,7 +102,7 @@ extension SSPhotoGroupDetailViewController {
 // MARK: - Event Response
 extension SSPhotoGroupDetailViewController {
     func preview() {
-        var photos = SSPhoto.photosWithAssets(selectedAssets)
+        let photos = SSPhoto.photosWithAssets(selectedAssets)
         let browser = SSImageBrowser(aPhotos: photos)
         self.showViewController(browser, sender: nil)
         browser.disableVerticalSwipe = true
@@ -163,7 +163,7 @@ extension SSPhotoGroupDetailViewController: UICollectionViewDataSource, UICollec
             }
             selectedAssets.append(asset)
         } else {
-            if let index = find(selectedAssets, asset) {
+            if let index = selectedAssets.indexOf(asset) {
                 selectedAssets.removeAtIndex(index)
             }
         }

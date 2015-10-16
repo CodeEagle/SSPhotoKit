@@ -14,8 +14,8 @@ extension NSDate {
         let calendar = NSCalendar.currentCalendar()
         let date1 = NSDate()
         let date2 = NSDate(timeInterval: timeInterval, sinceDate: date1)
-        let flags = NSCalendarUnit.CalendarUnitSecond | NSCalendarUnit.CalendarUnitMinute | NSCalendarUnit.CalendarUnitHour | NSCalendarUnit.CalendarUnitDay | NSCalendarUnit.CalendarUnitMonth | NSCalendarUnit.CalendarUnitYear
-        return calendar.components(flags, fromDate: date1, toDate: date2, options: NSCalendarOptions.allZeros)
+        let flags: NSCalendarUnit = [NSCalendarUnit.Second, NSCalendarUnit.Minute, NSCalendarUnit.Hour, NSCalendarUnit.Day, NSCalendarUnit.Month, NSCalendarUnit.Year]
+        return calendar.components(flags, fromDate: date1, toDate: date2, options: NSCalendarOptions())
         
     }
     

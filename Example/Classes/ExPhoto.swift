@@ -19,7 +19,7 @@ extension PHAsset {
         }
         
         let manager = PHImageManager.defaultManager()
-        var option = PHImageRequestOptions()
+        let option = PHImageRequestOptions()
         var thumbnail:UIImage! = UIImage()
         
         let scale = UIScreen.mainScreen().scale
@@ -39,7 +39,7 @@ extension PHAsset {
     }
     
     var identifier: String {
-        return self.localIdentifier.pathComponents[0]
+        return self.localIdentifier//.pathComponents[0]
     }
     
     func imageWithSize(size:CGSize, done:(UIImage)->() ){
@@ -50,15 +50,15 @@ extension PHAsset {
         }
 
         let manager = PHImageManager.defaultManager()
-        var option = PHImageRequestOptions()
+        let option = PHImageRequestOptions()
         option.synchronous = false
         option.networkAccessAllowed = true
         option.normalizedCropRect = CGRect(origin: CGPointZero, size: size)
         option.resizeMode = .Exact
         option.progressHandler = {
             (progress , error, stop, info) -> Void in
-            print(progress)
-            print(info)
+            print(progress, terminator: "")
+            print(info, terminator: "")
         }
         var thumbnail = UIImage()
 
@@ -89,9 +89,9 @@ extension String {
 extension UIImage {
     
     public func imageRotatedByDegrees(degrees: CGFloat, flip: Bool) -> UIImage {
-        let radiansToDegrees: (CGFloat) -> CGFloat = {
-            return $0 * (180.0 / CGFloat(M_PI))
-        }
+//        let radiansToDegrees: (CGFloat) -> CGFloat = {
+//            return $0 * (180.0 / CGFloat(M_PI))
+//        }
         let degreesToRadians: (CGFloat) -> CGFloat = {
             return $0 / 180.0 * CGFloat(M_PI)
         }
@@ -135,7 +135,7 @@ extension UIImage {
         color.setFill()
         let bounds = CGRectMake(0, 0, self.size.width, self.size.height)
         UIRectFill(bounds)
-        self.drawInRect(bounds, blendMode: kCGBlendModeDestinationIn, alpha: 1.0)
+        self.drawInRect(bounds, blendMode: CGBlendMode.DestinationIn, alpha: 1.0)
         let tintedImage = UIGraphicsGetImageFromCurrentImageContext();
         UIGraphicsEndImageContext()
         return tintedImage

@@ -41,7 +41,7 @@ public class ASDisplayCollectionViewCell: UICollectionViewCell {
         super.init(frame: frame)
         initialize()
     }
-    public required init(coder aDecoder: NSCoder) {
+    public required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         initialize()
     }
@@ -113,7 +113,7 @@ extension ASDisplayCollectionViewCell {
             }
             if let strongSelf = self {
                 
-                var containerNode: ASDisplayNode!  = ASDisplayNode()
+                let containerNode: ASDisplayNode!  = ASDisplayNode()
                 containerNode.layerBacked = true
                 containerNode.shouldRasterizeDescendants = true
                 containerNode.frame = strongSelf.bounds
@@ -122,7 +122,7 @@ extension ASDisplayCollectionViewCell {
 
                 let len = Config.kThumbnailLength
                 let imageRect = CGRectMake(0, 0, len, len)
-                let padding: CGFloat = 10
+//                let padding: CGFloat = 10
                 img.image = asset.image
                 img.layerBacked = true
                 img.frame = imageRect

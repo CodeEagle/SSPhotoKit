@@ -55,20 +55,20 @@ extension SSPhotoKit {
     
     
     private func configurePhotoPreviewSheet() {
-        let controller = ImagePickerSheetController()
+        let controller = ImagePickerSheetController(mediaType: .Image)
         weak var wself: SSPhotoKit! = self
         controller.maximumSelection = maximumNumberOfSelection
-        controller.addAction(ImageAction(title: NSLocalizedString("照片图库", comment: ""), secondaryTitle: { NSString.localizedStringWithFormat(NSLocalizedString("选择%lu张", comment: ""), $0) as String }, handler: { _ in
+        controller.addAction(ImagePickerAction(title: NSLocalizedString("照片图库", comment: ""), secondaryTitle: { NSString.localizedStringWithFormat(NSLocalizedString("选择%lu张", comment: ""), $0) as String }, handler: { _ in
             wself?.presentImagePickerController(.PhotoLibrary)
             }, secondaryHandler: { _, numberOfPhotos in
                 wself?.selectdDone(controller.selectedImageAssets)
         }))
         
-        controller.addAction(ImageAction(title: NSLocalizedString("拍照", comment: ""), handler: { _ in
+        controller.addAction(ImagePickerAction(title: NSLocalizedString("拍照", comment: ""), handler: { _ in
             wself?.presentImagePickerController(.Camera)
         }))
         
-        controller.addAction(ImageAction(title: NSLocalizedString("取消", comment: ""), style: .Cancel, handler: { _ in
+        controller.addAction(ImagePickerAction(title: NSLocalizedString("取消", comment: ""), style: .Cancel, handler: { _ in
             wself?.delegate?.photoKitDidCancel(wself)
         }))
         
@@ -89,11 +89,11 @@ extension SSPhotoKit {
         }
         cameraShooter.sourceType = sourceType
         
-        var isDenied = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo) == .Denied
+        let isDenied = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo) == .Denied
         if isDenied && isCamera {
             let views = SSPhotoForbbidenView()
             var rect = CGRectInset(cameraShooter.view.bounds, 0, 60)
-            rect.offset(dx: 0, dy: -20)
+            rect.offsetInPlace(dx: 0, dy: -20)
             views.frame = rect
             cameraShooter.cameraOverlayView = views
         }
@@ -128,7 +128,7 @@ private typealias CameraPhotoInfo = [NSObject : AnyObject]
 extension SSPhotoKit: UIImagePickerControllerDelegate,UINavigationControllerDelegate {
     
     ///拍照返回
-    public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [NSObject : AnyObject]) {
+    public func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
         selectdDone([info])
         picker.dismissViewControllerAnimated(true, completion: nil)
     }

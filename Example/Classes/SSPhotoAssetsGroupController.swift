@@ -33,7 +33,7 @@ public class SSPhotoAssetsGroupController: UICollectionViewController {
         initialize()
     }
     
-    required public init(coder aDecoder: NSCoder) {
+    required public init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
         initialize()
     }
@@ -80,15 +80,15 @@ public class SSPhotoAssetsGroupController: UICollectionViewController {
                 case SmartAlbumUserLibrary
                 */
                 let subtype : [[PHAssetCollectionSubtype]] = [[.SmartAlbumUserLibrary,.SmartAlbumGeneric,.SmartAlbumPanoramas,.SmartAlbumFavorites,.SmartAlbumTimelapses,.SmartAlbumRecentlyAdded,.SmartAlbumBursts],[.AlbumRegular]]
-                for (i,item) in enumerate(array) {
+                for (i,item) in array.enumerate() {
                     
-                    for (k,asubType) in enumerate(subtype[i]) {
+                    for (_,asubType) in subtype[i].enumerate() {
                         let smartAlbums = PHAssetCollection.fetchAssetCollectionsWithType(item, subtype: asubType, options: nil)
                         
                         smartAlbums.enumerateObjectsUsingBlock({ (obj , index, stop) -> Void in
                             if let c = obj as? PHAssetCollection {
                                 let assetsFetchResult = PHAsset.fetchAssetsInAssetCollection(c, options: nil)
-                                if let asset = assetsFetchResult.firstObject as? PHAsset {
+                                if let _ = assetsFetchResult.firstObject as? PHAsset {
                                     self.assetsGroup.append(c)
                                 }
                             }
@@ -175,7 +175,7 @@ public class SSPhotoForbbidenView: UIView {
         var ay: CGFloat = 0
         let bundle = NSBundle(forClass: SSPhotoKit.self)
         if let lock = UIImage(named: "AssetsPickerLocked", inBundle: bundle, compatibleWithTraitCollection: nil) {
-            var image = lock.toTintColor(UIColor.darkGrayColor())
+            let image = lock.toTintColor(UIColor.darkGrayColor())
             let x = ( layer.bounds.width - lock.size.width ) / 2
             let y = ( layer.bounds.height - lock.size.height ) / 2 - 40
             image.drawAtPoint(CGPointMake(x, y))
@@ -192,7 +192,7 @@ public class SSPhotoForbbidenView: UIView {
         ]
         let attr = NSAttributedString(string: NSLocalizedString(tips, comment: ""), attributes: attribute)
         let rect = CGRectMake(20, ay + 20, layer.bounds.width - 40, 100)
-        attr.drawWithRect(rect, options: .UsesLineFragmentOrigin | .UsesLineFragmentOrigin, context: nil)
+        attr.drawWithRect(rect, options: [.UsesLineFragmentOrigin, .UsesLineFragmentOrigin], context: nil)
     }
 }
 

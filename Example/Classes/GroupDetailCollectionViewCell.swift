@@ -43,7 +43,7 @@ public class GroupDetailCollectionViewCell: UICollectionViewCell {
         /// Image
         let len = Config.kThumbnailLength
         let imageRect = CGRectMake(0, 0, len, len)
-        let padding: CGFloat = 10
+//        let padding: CGFloat = 10
         
         let image = asset.image
         if stop {

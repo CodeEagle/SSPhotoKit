@@ -27,7 +27,7 @@ public class SSPhotoGroupContentView: UIView {
         let len = Config.kGroupSize.width
         let imageRect = CGRectMake(0, 0, len, len)
         let padding: CGFloat = 10
-        let assetsFetchResult = PHAsset.fetchAssetsInAssetCollection(group, options: nil)
+        let assetsFetchResult = PHAsset.fetchAssetsInAssetCollection(group!, options: nil)
         var images = [UIImage]()
         let acount = assetsFetchResult.count
         
@@ -51,7 +51,7 @@ public class SSPhotoGroupContentView: UIView {
         let left : CGFloat = (1 - factor)/2
         let top = (len - (Config.kGroupSize.width * factor + offsetY*(CGFloat(images.count ) - 1)))/2
         var lastImageRect = imageRect
-        for (index,image) in enumerate(images) {
+        for (index,image) in images.enumerate() {
             
             let alen = Config.kGroupSize.width * (factor - CGFloat(images.count - index - 1)*left )
             let arect = CGRectMake((len - alen)/2, CGFloat(index)*offsetY + top, alen, alen)
@@ -71,33 +71,31 @@ public class SSPhotoGroupContentView: UIView {
             
             
             let width = cellSize.width - CGRectGetMaxX(imageRect) - padding*2
-            let size = total.boundingRectWithSize(CGSizeMake(width, CGFloat.infinity), options: .UsesLineFragmentOrigin | .UsesFontLeading, context: nil)
+            let size = total.boundingRectWithSize(CGSizeMake(width, CGFloat.infinity), options: [.UsesLineFragmentOrigin, .UsesFontLeading], context: nil)
             let y = (cellSize.height - size.height) / 2
             let rect = CGRectMake(CGRectGetMaxX(imageRect) + padding, y, width, size.height)
-            total.drawWithRect(rect, options: .UsesLineFragmentOrigin | .UsesFontLeading, context: nil)
+            total.drawWithRect(rect, options: [.UsesLineFragmentOrigin, .UsesFontLeading], context: nil)
         }
         let bundle = NSBundle(forClass: SSPhotoKit.self)
         if let backArrow = UIImage(named: "back_normal", inBundle: bundle, compatibleWithTraitCollection: nil) {
             let scale = UIScreen.mainScreen().scale
-            let infoArrow = UIImage(CGImage: backArrow.CGImage, scale: scale * 2, orientation: UIImageOrientation.Up)
-            if let smaller = infoArrow?.imageRotatedByDegrees(180, flip: false) {
+            let infoArrow = UIImage(CGImage: backArrow.CGImage!, scale: scale * 2, orientation: UIImageOrientation.Up)
+                let smaller = infoArrow.imageRotatedByDegrees(180, flip: false)
                 let size = smaller.size
                 let x = cellSize.width - size.width - padding
                 let y = (cellSize.height - size.height) / 2
                 let arect = CGRectMake(x, y, size.width, size.height)
                 smaller.drawInRect(arect)
-            }
-            
         }
         
         if group?.assetCollectionSubtype == .SmartAlbumVideos {
-            let asset = images.last
-            let duration = asset?.duration
-            let h: CGFloat = 20
-            let text = "\(duration)"
+//            let asset = images.last
+//            let duration = asset?.duration
+//            let h: CGFloat = 20
+//            let text = "\(duration)"
             
             let height          = lastImageRect.size.height
-            let width           = lastImageRect.size.width
+//            let width           = lastImageRect.size.width
             let startPoint      = CGPointMake(0, CGRectGetMidY(lastImageRect))
             let endPoint        = CGPointMake(0, CGRectGetMaxY(lastImageRect))
             
@@ -106,11 +104,11 @@ public class SSPhotoGroupContentView: UIView {
                 UIColor(red: 0, green: 0, blue: 0, alpha: 0).CGColor,
                 UIColor(red: 0, green: 0, blue: 0, alpha: 0.8).CGColor,
                 UIColor(red: 0, green: 0, blue: 0, alpha: 1).CGColor]
-            let colorspace : CGColorSpaceRef = CGColorSpaceCreateDeviceRGB()
-            let gradient : CGGradientRef = CGGradientCreateWithColors(colorspace, colors, locations)
+            let colorspace : CGColorSpaceRef = CGColorSpaceCreateDeviceRGB()!
+            let gradient : CGGradientRef = CGGradientCreateWithColors(colorspace, colors, locations)!
             CGContextAddRect(ctx, lastImageRect)
             CGContextClip(ctx)
-            CGContextDrawLinearGradient(ctx, gradient,startPoint, endPoint, CGGradientDrawingOptions(kCGGradientDrawsBeforeStartLocation))
+            CGContextDrawLinearGradient(ctx, gradient,startPoint, endPoint, CGGradientDrawingOptions.DrawsBeforeStartLocation)
             
             let bundle = NSBundle(forClass: SSPhotoKit.self)
             if let image = UIImage(named: "AssetsPickerVideo", inBundle: bundle, compatibleWithTraitCollection: nil) {

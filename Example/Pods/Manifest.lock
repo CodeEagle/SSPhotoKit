@@ -1,14 +1,14 @@
 PODS:
-  - AsyncDisplayKit (1.2.2):
-    - AsyncDisplayKit/ASDealloc2MainObject (= 1.2.2)
-  - AsyncDisplayKit/ASDealloc2MainObject (1.2.2)
+  - AsyncDisplayKit (1.2.3):
+    - AsyncDisplayKit/ASDealloc2MainObject (= 1.2.3)
+  - AsyncDisplayKit/ASDealloc2MainObject (1.2.3)
   - DACircularProgress (2.3.1)
-  - ImagePickerSheetController (0.1.7)
-  - pop (1.0.7)
+  - ImagePickerSheetController (0.9)
+  - pop (1.0.8)
   - SDWebImage (3.7.3):
     - SDWebImage/Core (= 3.7.3)
   - SDWebImage/Core (3.7.3)
-  - SSImageBrowser (0.1.4):
+  - SSImageBrowser (2.0.0):
     - DACircularProgress
     - pop
     - SDWebImage
@@ -16,14 +16,14 @@ PODS:
 DEPENDENCIES:
   - AsyncDisplayKit
   - ImagePickerSheetController
-  - SSImageBrowser (~> 0.1.4)
+  - SSImageBrowser
 
 SPEC CHECKSUMS:
-  AsyncDisplayKit: 6b943f45844558fde1d82468820dbefcc77c7271
+  AsyncDisplayKit: 5c8f38225f7478e39c48196cec0dd0d2ac3455ed
   DACircularProgress: 4dd437c0fc3da5161cb289e07ac449493d41db71
-  ImagePickerSheetController: 127cc7a5e8da7fa17d42aa4ba7509f72af9cd71f
-  pop: 628ffc631644601567ee8bfaaaea493ebd7d0923
+  ImagePickerSheetController: f3d5b46a7a4f403a690c6f08e2273d8a33861216
+  pop: bb773ae2c791ca2629de13b347e7a8b450fa6a57
   SDWebImage: 1d2b1a1efda1ade1b00b6f8498865f8ddedc8a84
-  SSImageBrowser: a22f0c0f36e476097b33e2108427e50fbc092633
+  SSImageBrowser: 4c5bf1c65566cc55ecff48617f14685f42867183
 
-COCOAPODS: 0.37.2
+COCOAPODS: 0.38.2
