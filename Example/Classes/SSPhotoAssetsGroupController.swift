@@ -98,7 +98,7 @@ public class SSPhotoAssetsGroupController: UICollectionViewController {
                     
                 }
                 dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                    collectionView?.reloadData()
+                    self.collectionView?.reloadData()
                 })
             })
         }
