@@ -15,9 +15,10 @@
 @interface _ASAsyncTransactionGroup : NSObject
 /// The main transaction group is scheduled to commit on every tick of the main runloop.
 + (instancetype)mainTransactionGroup;
++ (void)commit;
 
 /// Add a transaction container to be committed.
-/// @param containerLayer A layer containing a transaction to be commited. May or may not be a container layer.
+/// @param containerLayer A layer containing a transaction to be committed. May or may not be a container layer.
 /// @see ASAsyncTransactionContainer
 - (void)addTransactionContainer:(CALayer *)containerLayer;
 @end

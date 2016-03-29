@@ -12,20 +12,46 @@
 
 #import "ASDisplayNode+Subclasses.h"
 #import "ASEqualityHelpers.h"
-#import "ASTextNodeTextKitHelpers.h"
+#import "ASTextKitHelpers.h"
 #import "ASTextNodeWordKerner.h"
 #import "ASThread.h"
 
-//! @abstract This subclass exists solely to ensure the text view's panGestureRecognizer never begins, because it's sporadically enabled by UITextView. It will be removed pending rdar://14729288.
-@interface _ASDisabledPanUITextView : UITextView
+/**
+ @abstract As originally reported in rdar://14729288, when scrollEnabled = NO,
+   UITextView does not calculate its contentSize. This makes it difficult 
+   for a client to embed a UITextView inside a different scroll view with 
+   other content (setting scrollEnabled = NO on the UITextView itself,
+   because the containing scroll view will handle the gesture)...
+   because accessing contentSize is typically necessary to perform layout.
+   Apple later closed the issue as expected behavior. This works around
+   the issue by ensuring that contentSize is always calculated, while
+   still providing control over the UITextView's scrolling.
+
+ See issue: https://github.com/facebook/AsyncDisplayKit/issues/1063
+ */
+@interface ASPanningOverriddenUITextView : UITextView
+{
+  BOOL _shouldBlockPanGesture;
+}
 @end
 
-@implementation _ASDisabledPanUITextView
+@implementation ASPanningOverriddenUITextView
+
+- (BOOL)scrollEnabled
+{
+  return _shouldBlockPanGesture;
+}
+
+- (void)setScrollEnabled:(BOOL)scrollEnabled
+{
+  _shouldBlockPanGesture = !scrollEnabled;
+  [super setScrollEnabled:YES];
+}
 
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
 {
-  // Never allow our pans to begin.
-  if (gestureRecognizer == self.panGestureRecognizer)
+  // Never allow our pans to begin when _shouldBlockPanGesture is true.
+  if (_shouldBlockPanGesture && gestureRecognizer == self.panGestureRecognizer)
     return NO;
 
   // Otherwise, proceed as usual.
@@ -77,7 +103,9 @@
   _textKitComponents = [ASTextKitComponents componentsWithAttributedSeedString:nil textContainerSize:CGSizeZero];
   _textKitComponents.layoutManager.delegate = self;
   _wordKerner = [[ASTextNodeWordKerner alloc] init];
-
+  _returnKeyType = UIReturnKeyDefault;
+  _textContainerInset = UIEdgeInsetsZero;
+  
   // Create the placeholder scaffolding.
   _placeholderTextKitComponents = [ASTextKitComponents componentsWithAttributedSeedString:nil textContainerSize:CGSizeZero];
   _placeholderTextKitComponents.layoutManager.delegate = self;
@@ -85,13 +113,13 @@
   return self;
 }
 
-- (instancetype)initWithLayerBlock:(ASDisplayNodeLayerBlock)viewBlock
+- (instancetype)initWithLayerBlock:(ASDisplayNodeLayerBlock)viewBlock didLoadBlock:(ASDisplayNodeDidLoadBlock)didLoadBlock
 {
   ASDisplayNodeAssertNotSupported();
   return nil;
 }
 
-- (instancetype)initWithViewBlock:(ASDisplayNodeViewBlock)viewBlock
+- (instancetype)initWithViewBlock:(ASDisplayNodeViewBlock)viewBlock didLoadBlock:(ASDisplayNodeDidLoadBlock)didLoadBlock
 {
   ASDisplayNodeAssertNotSupported();
   return nil;
@@ -121,8 +149,7 @@
       textView.backgroundColor = nil;
       textView.opaque = NO;
     }
-    textView.textContainerInset = UIEdgeInsetsZero;
-    textView.clipsToBounds = NO; // We don't want selection handles cut off.
+    textView.textContainerInset = self.textContainerInset;
   };
 
   // Create and configure the placeholder text view.
@@ -133,27 +160,33 @@
   [self.view addSubview:_placeholderTextKitComponents.textView];
 
   // Create and configure our text view.
-  _textKitComponents.textView = [[_ASDisabledPanUITextView alloc] initWithFrame:CGRectZero textContainer:_textKitComponents.textContainer];
+  _textKitComponents.textView = self.textView;
   //_textKitComponents.textView = NO; // Unfortunately there's a bug here with iOS 7 DP5 that causes the text-view to only be one line high when scrollEnabled is NO. rdar://14729288
   _textKitComponents.textView.delegate = self;
+  #if TARGET_OS_IOS
   _textKitComponents.textView.editable = YES;
+  #endif
   _textKitComponents.textView.typingAttributes = _typingAttributes;
+  _textKitComponents.textView.returnKeyType = _returnKeyType;
   _textKitComponents.textView.accessibilityHint = _placeholderTextKitComponents.textStorage.string;
   configureTextView(_textKitComponents.textView);
   [self.view addSubview:_textKitComponents.textView];
+  [self _updateDisplayingPlaceholder];
 }
 
 - (CGSize)calculateSizeThatFits:(CGSize)constrainedSize
 {
   ASTextKitComponents *displayedComponents = [self isDisplayingPlaceholder] ? _placeholderTextKitComponents : _textKitComponents;
   CGSize textSize = [displayedComponents sizeForConstrainedWidth:constrainedSize.width];
+  textSize = ceilSizeValue(textSize);
   return CGSizeMake(constrainedSize.width, fminf(textSize.height, constrainedSize.height));
 }
 
 - (void)layout
 {
-  [super layout];
+  ASDisplayNodeAssertMainThread();
 
+  [super layout];
   [self _layoutTextView];
 }
 
@@ -171,6 +204,15 @@
   _placeholderTextKitComponents.textView.backgroundColor = backgroundColor;
 }
 
+- (void)setTextContainerInset:(UIEdgeInsets)textContainerInset
+{
+  ASDN::MutexLocker l(_textKitLock);
+
+  _textContainerInset = textContainerInset;
+  _textKitComponents.textView.textContainerInset = textContainerInset;
+  _placeholderTextKitComponents.textView.textContainerInset = textContainerInset;
+}
+
 - (void)setOpaque:(BOOL)opaque
 {
   [super setOpaque:opaque];
@@ -185,8 +227,30 @@
   _placeholderTextKitComponents.textView.opaque = opaque;
 }
 
+- (void)setLayerBacked:(BOOL)layerBacked
+{
+  ASDisplayNodeAssert(!layerBacked, @"Cannot set layerBacked to YES on ASEditableTextNode – instances must be view-backed in order to ensure touch events can be passed to the internal UITextView during editing.");
+  [super setLayerBacked:layerBacked];
+}
+
 #pragma mark - Configuration
 @synthesize delegate = _delegate;
+
+- (void)setScrollEnabled:(BOOL)scrollEnabled
+{
+  ASDN::MutexLocker l(_textKitLock);
+  _scrollEnabled = scrollEnabled;
+  [_textKitComponents.textView setScrollEnabled:_scrollEnabled];
+}
+
+- (UITextView *)textView
+{
+  ASDisplayNodeAssertMainThread();
+  if (!_textKitComponents.textView) {
+    _textKitComponents.textView = [[ASPanningOverriddenUITextView alloc] initWithFrame:CGRectZero textContainer:_textKitComponents.textContainer];
+  }
+  return _textKitComponents.textView;
+}
 
 #pragma mark -
 @dynamic typingAttributes;
@@ -198,7 +262,7 @@
 
 - (void)setTypingAttributes:(NSDictionary *)typingAttributes
 {
-  if (_typingAttributes == typingAttributes)
+  if (ASObjectIsEqual(typingAttributes, _typingAttributes))
     return;
 
   _typingAttributes = [typingAttributes copy];
@@ -245,7 +309,7 @@
   if (ASObjectIsEqual(_placeholderTextKitComponents.textStorage, attributedPlaceholderText))
     return;
 
-  [_placeholderTextKitComponents.textStorage setAttributedString:attributedPlaceholderText ?: [[NSAttributedString alloc] initWithString:@""]];
+  [_placeholderTextKitComponents.textStorage setAttributedString:attributedPlaceholderText ? : [[NSAttributedString alloc] initWithString:@""]];
   _textKitComponents.textView.accessibilityHint = attributedPlaceholderText.string;
 }
 
@@ -268,7 +332,7 @@
 
   // If we (_cmd) are called while the text view itself is updating (-textViewDidUpdate:), you cannot update the text storage and expect perfect propagation to the text view.
   // Thus, we always update the textview directly if it's been created already.
-  if (ASObjectIsEqual((_textKitComponents.textView.attributedText ?: _textKitComponents.textStorage), attributedText))
+  if (ASObjectIsEqual((_textKitComponents.textView.attributedText ? : _textKitComponents.textStorage), attributedText))
     return;
 
   // If the cursor isn't at the end of the text, we need to preserve the selected range to avoid moving the cursor.
@@ -290,7 +354,7 @@
     [_textKitComponents.textStorage setAttributedString:attributedStringToDisplay];
 
   // Calculated size depends on the seeded text.
-  [self invalidateCalculatedSize];
+  [self invalidateCalculatedLayout];
 
   // Update if placeholder is shown.
   [self _updateDisplayingPlaceholder];
@@ -346,6 +410,13 @@
   return [_textKitComponents.textView textInputMode];
 }
 
+- (void)setReturnKeyType:(UIReturnKeyType)returnKeyType
+{
+  ASDN::MutexLocker l(_textKitLock);
+  _returnKeyType = returnKeyType;
+  [_textKitComponents.textView setReturnKeyType:_returnKeyType];
+}
+
 - (BOOL)isFirstResponder
 {
   ASDN::MutexLocker l(_textKitLock);
@@ -399,7 +470,7 @@
   [self _updateDisplayingPlaceholder];
 
   // Invalidate, as our calculated size depends on the textview's seeded text.
-  [self invalidateCalculatedSize];
+  [self invalidateCalculatedLayout];
 
   // Delegateify.
   [self _delegateDidUpdateText];

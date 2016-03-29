@@ -237,16 +237,30 @@ public class ImagePickerSheetController: UIViewController {
         }
         
         let result = PHAsset.fetchAssetsWithOptions(options)
+        let requestOptions = PHImageRequestOptions()
+        requestOptions.synchronous = true
+        requestOptions.deliveryMode = .FastFormat
         
-        result.enumerateObjectsUsingBlock { obj, _, _ in
-            if let asset = obj as? PHAsset where  self.assets.count < fetchLimit {
-                self.assets.append(asset)
+        result.enumerateObjectsUsingBlock { asset, _, stop in
+            defer {
+                if self.assets.count > fetchLimit {
+                    stop.initialize(true)
+                }
+            }
+            
+            if let asset = asset as? PHAsset {
+                self.imageManager.requestImageDataForAsset(asset, options: requestOptions) { data, _, _, info in
+                    if data != nil {
+                        self.assets.append(asset)
+                    }
+                }
             }
         }
     }
     
     private func requestImageForAsset(asset: PHAsset, completion: (image: UIImage?) -> ()) {
         let targetSize = sizeForAsset(asset, scale: UIScreen.mainScreen().scale)
+        requestOptions.synchronous = true
         
         // Workaround because PHImageManager.requestImageForAsset doesn't work for burst images
         if asset.representsBurst {
@@ -308,7 +322,7 @@ public class ImagePickerSheetController: UIViewController {
         let assetHeights = assetRatios.map { $0 * maxImageWidth }
                                       .filter { $0 < maxImageWidth && $0 < maxHeight } // Make sure the preview isn't too high eg for squares
                                       .sort(>)
-        let assetHeight = round(assetHeights.first ?? 0)
+        let assetHeight = ceil(assetHeights.first ?? 0)
         
         // Just a sanity check, to make sure this doesn't exceed 400 points
         let scaledHeight = max(min(assetHeight, maxHeight), 200)
@@ -385,14 +399,6 @@ extension ImagePickerSheetController: UICollectionViewDataSource {
 
 extension ImagePickerSheetController: UICollectionViewDelegate {
     
-    public func collectionView(collectionView: UICollectionView, willDisplayCell cell: UICollectionViewCell, forItemAtIndexPath indexPath: NSIndexPath) {
-        let nextIndex = indexPath.item+1
-        if nextIndex < assets.count {
-            let asset = assets[nextIndex]
-            self.prefetchImagesForAsset(asset)
-        }
-    }
-    
     public func collectionView(collectionView: UICollectionView, didSelectItemAtIndexPath indexPath: NSIndexPath) {
         if let maximumSelection = maximumSelection {
             if selectedImageIndices.count >= maximumSelection,
@@ -455,11 +461,8 @@ extension ImagePickerSheetController: UICollectionViewDelegateFlowLayout {
     }
 
     public func collectionView(collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, referenceSizeForHeaderInSection section: Int) -> CGSize {
-        let inset = 2.0 * previewCheckmarkInset
-        let size = self.collectionView(collectionView, layout: collectionViewLayout, sizeForItemAtIndexPath: NSIndexPath(forItem: 0, inSection: section))
-        let imageWidth = PreviewSupplementaryView.checkmarkImage?.size.width ?? 0
-        
-        return CGSizeMake(imageWidth  + inset, size.height)
+        let checkmarkWidth = PreviewSupplementaryView.checkmarkImage?.size.width ?? 0
+        return CGSizeMake(checkmarkWidth + 2 * previewCheckmarkInset, sheetController.previewHeight - 2 * previewCollectionViewInset)
     }
     
 }

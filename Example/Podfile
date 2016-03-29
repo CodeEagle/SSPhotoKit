@@ -1,6 +1,15 @@
 source 'https://github.com/CocoaPods/Specs.git'
+
+platform :ios, '8.0'
+
 use_frameworks!
+
 inhibit_all_warnings!
+
+post_install do |installer|
+    `find Pods -regex 'Pods/pop.*\\.h' -print0 | xargs -0 sed -i '' 's/\\(<\\)pop\\/\\(.*\\)\\(>\\)/\\"\\2\\"/'`
+end
+
 pod 'ImagePickerSheetController'
 pod 'SSImageBrowser'
-pod 'AsyncDisplayKit'
+pod 'AsyncDisplayKit', '1.9.7'
