@@ -1,0 +1,12 @@
+CLANG_CXX_LANGUAGE_STANDARD = c++11
+CLANG_CXX_LIBRARY = libc++
+EMBEDDED_CONTENT_CONTAINS_SWIFT = YES
+FRAMEWORK_SEARCH_PATHS = $(inherited) "$PODS_CONFIGURATION_BUILD_DIR/AsyncDisplayKit" "$PODS_CONFIGURATION_BUILD_DIR/DACircularProgress" "$PODS_CONFIGURATION_BUILD_DIR/ImagePickerSheetController" "$PODS_CONFIGURATION_BUILD_DIR/SSImageBrowser"
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
+LD_RUNPATH_SEARCH_PATHS = $(inherited) '@executable_path/Frameworks' '@loader_path/Frameworks'
+OTHER_CFLAGS = $(inherited) -iquote "$PODS_CONFIGURATION_BUILD_DIR/AsyncDisplayKit/AsyncDisplayKit.framework/Headers" -iquote "$PODS_CONFIGURATION_BUILD_DIR/DACircularProgress/DACircularProgress.framework/Headers" -iquote "$PODS_CONFIGURATION_BUILD_DIR/ImagePickerSheetController/ImagePickerSheetController.framework/Headers" -iquote "$PODS_CONFIGURATION_BUILD_DIR/SSImageBrowser/SSImageBrowser.framework/Headers"
+OTHER_LDFLAGS = $(inherited) -framework "AsyncDisplayKit" -framework "DACircularProgress" -framework "ImagePickerSheetController" -framework "SSImageBrowser"
+OTHER_SWIFT_FLAGS = $(inherited) "-D" "COCOAPODS"
+PODS_BUILD_DIR = $BUILD_DIR
+PODS_CONFIGURATION_BUILD_DIR = $PODS_BUILD_DIR/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)
+PODS_ROOT = ${SRCROOT}/Pods

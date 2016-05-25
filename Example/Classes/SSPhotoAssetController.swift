@@ -63,7 +63,9 @@ public class SSPhotoAssetController: UINavigationController {
     }
     
     func dismiss() {
-        self.presentingViewController?.dismissViewControllerAnimated(true, completion: nil)
+        self.presentingViewController?.dismissViewControllerAnimated(true, completion: { () -> Void in
+            SSPhotoKit.clear()
+        })
     }
     
 }

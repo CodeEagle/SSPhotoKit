@@ -8,7 +8,7 @@
 
 import UIKit
 class ViewController: UIViewController {
-    let photoKit = SSPhotoKit()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
@@ -20,8 +20,8 @@ class ViewController: UIViewController {
     }
 
     override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
-        photoKit.maximumNumberOfSelection = 4
-        photoKit.showPickerIn(self, done: { (results) -> () in
+        SSPhotoKit.shared.maximumNumberOfSelection = 4
+        SSPhotoKit.shared.showPickerIn(self, done: { (results) -> () in
             debugPrint(results.count)
         })
     }

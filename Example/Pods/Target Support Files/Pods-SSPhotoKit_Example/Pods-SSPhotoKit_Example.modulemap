@@ -1,0 +1,6 @@
+framework module Pods_SSPhotoKit_Example {
+  umbrella header "Pods-SSPhotoKit_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

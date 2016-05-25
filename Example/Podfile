@@ -1,6 +1,11 @@
 source 'https://github.com/CocoaPods/Specs.git'
 use_frameworks!
 inhibit_all_warnings!
-pod 'ImagePickerSheetController'
-pod 'SSImageBrowser'
-pod 'AsyncDisplayKit'
+
+
+
+target :SSPhotoKit_Example do
+  pod 'ImagePickerSheetController'
+  pod 'SSImageBrowser'
+  pod 'AsyncDisplayKit'
+end

@@ -24,15 +24,35 @@ public struct Config {
 }
 public class SSPhotoKit: NSObject {
     
-    static var shared: SSPhotoKit!
+    static private var _shared: SSPhotoKit!
+    
+    class public var shared: SSPhotoKit {
+        if _shared == nil {
+            _shared = SSPhotoKit()
+        }
+        return _shared
+    }
+    
+    class func clear() {
+        _shared = nil
+    }
+    
+    deinit {
+        debugPrint("deinit SSPhotoKit")
+    }
+    
+    override private init() {
+        super.init()
+    }
     
     public var cameraShooter: UIImagePickerController!
     public var maximumNumberOfSelection: Int = 10
     public lazy var showCancelButton: Bool = true
     public var photoPicker: SSPhotoAssetController!
     public weak var delegate: SSPhotoKitDelegate?
-    private var aViewController: UIViewController!
+    private weak var aViewController: UIViewController!
     private var completeSelection:(([AnyObject])->())!
+    
     public func showPickerIn(viewController: UIViewController,done: ([AnyObject])->()) {
         showPickerIn(viewController, cameraConfig: nil, done: done)
     }
@@ -44,39 +64,42 @@ public class SSPhotoKit: NSObject {
         completeSelection = done
     }
     
-    
-    override public init() {
-        super.init()
-        SSPhotoKit.shared = self
+    public func selectdDone(objs: [AnyObject]) {
+        completeSelection?(objs)
+        delegate?.photoKit(self, didFinishSelected: objs)
     }
 }
-
-extension SSPhotoKit {
+// MARK: - Private
+private extension SSPhotoKit {
     
-    
-    private func configurePhotoPreviewSheet() {
+    func configurePhotoPreviewSheet() {
         let controller = ImagePickerSheetController(mediaType: .Image)
-        weak var wself: SSPhotoKit! = self
+        controller.view.tintColor = UIColor(red:0.231,  green:0.675,  blue:0.224, alpha:1)
+
         controller.maximumSelection = maximumNumberOfSelection
-        controller.addAction(ImagePickerAction(title: NSLocalizedString("照片图库", comment: ""), secondaryTitle: { NSString.localizedStringWithFormat(NSLocalizedString("选择%lu张", comment: ""), $0) as String }, handler: { _ in
-            wself?.presentImagePickerController(.PhotoLibrary)
-            }, secondaryHandler: { _, numberOfPhotos in
-                wself?.selectdDone(controller.selectedImageAssets)
+        controller.addAction(ImagePickerAction(title: NSLocalizedString("照片图库", comment: ""), secondaryTitle: { NSString.localizedStringWithFormat(NSLocalizedString("选择%lu张", comment: ""), $0) as String }, handler: {[weak self] _ in
+            self?.presentImagePickerController(.PhotoLibrary)
+            }, secondaryHandler: {[weak self] _, numberOfPhotos in
+                self?.selectdDone(controller.selectedImageAssets)
+                SSPhotoKit.clear()
         }))
         
-        controller.addAction(ImagePickerAction(title: NSLocalizedString("拍照", comment: ""), handler: { _ in
-            wself?.presentImagePickerController(.Camera)
+        controller.addAction(ImagePickerAction(title: NSLocalizedString("拍照", comment: ""), handler: {[weak self]  _ in
+            self?.presentImagePickerController(.Camera)
         }))
         
-        controller.addAction(ImagePickerAction(title: NSLocalizedString("取消", comment: ""), style: .Cancel, handler: { _ in
-            wself?.delegate?.photoKitDidCancel(wself)
+        controller.addAction(ImagePickerAction(title: NSLocalizedString("取消", comment: ""), style: .Cancel, handler: {[weak self]  _ in
+            if let sself = self {
+                sself.delegate?.photoKitDidCancel(sself)
+                SSPhotoKit.clear()
+            }
         }))
         
         aViewController.presentViewController(controller, animated: true, completion: nil)
         
     }
     
-    private func configureCameraShooter(camera: UIImagePickerController!) {
+    func configureCameraShooter(camera: UIImagePickerController!) {
         if let aCamera = camera {
             cameraShooter = aCamera
         }else{
@@ -102,8 +125,7 @@ extension SSPhotoKit {
         
     }
     
-
-    private func presentImagePickerController(var sourceType: UIImagePickerControllerSourceType) {
+    func presentImagePickerController(var sourceType: UIImagePickerControllerSourceType) {
         if (!UIImagePickerController.isSourceTypeAvailable(sourceType)) {
             sourceType = .PhotoLibrary
         }
@@ -115,11 +137,6 @@ extension SSPhotoKit {
         aViewController.presentViewController(cameraShooter, animated: true, completion: nil)
     }
     
-    
-    public func selectdDone(objs: [AnyObject]) {
-        completeSelection?(objs)
-        delegate?.photoKit(self, didFinishSelected: objs)
-    }
 }
 
 private typealias CameraPhotoInfo = [NSObject : AnyObject]

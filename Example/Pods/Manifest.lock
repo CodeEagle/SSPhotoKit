@@ -4,26 +4,24 @@ PODS:
   - AsyncDisplayKit/ASDealloc2MainObject (1.2.3)
   - DACircularProgress (2.3.1)
   - ImagePickerSheetController (0.9)
-  - pop (1.0.8)
-  - SDWebImage (3.7.3):
-    - SDWebImage/Core (= 3.7.3)
-  - SDWebImage/Core (3.7.3)
-  - SSImageBrowser (2.0.0):
+  - SSImageBrowser (2.0.8):
     - DACircularProgress
-    - pop
-    - SDWebImage
 
 DEPENDENCIES:
   - AsyncDisplayKit
   - ImagePickerSheetController
-  - SSImageBrowser
+  - SSImageBrowser (from `SSImageBrowser`)
+
+EXTERNAL SOURCES:
+  SSImageBrowser:
+    :path: SSImageBrowser
 
 SPEC CHECKSUMS:
   AsyncDisplayKit: 5c8f38225f7478e39c48196cec0dd0d2ac3455ed
   DACircularProgress: 4dd437c0fc3da5161cb289e07ac449493d41db71
   ImagePickerSheetController: f3d5b46a7a4f403a690c6f08e2273d8a33861216
-  pop: bb773ae2c791ca2629de13b347e7a8b450fa6a57
-  SDWebImage: 1d2b1a1efda1ade1b00b6f8498865f8ddedc8a84
-  SSImageBrowser: 4c5bf1c65566cc55ecff48617f14685f42867183
+  SSImageBrowser: 06b45af06d085fcad1cd4d945497da344e7ef24e
 
-COCOAPODS: 0.38.2
+PODFILE CHECKSUM: ce80d8dfbd1e89d2ee1e1d4f13a01e6f3fc19663
+
+COCOAPODS: 1.0.0

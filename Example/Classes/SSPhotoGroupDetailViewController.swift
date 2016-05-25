@@ -30,7 +30,11 @@ public class SSPhotoGroupDetailViewController: UIViewController {
     private var selectedButton: UIButton!
     
     private lazy var selectedMap = [String:Bool]()
-    private lazy var selectedAssets = [PHAsset]()
+    private var selectedAssets = [PHAsset]() {
+        didSet {
+            updateTitle()
+        }
+    }
     
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -38,7 +42,7 @@ public class SSPhotoGroupDetailViewController: UIViewController {
         view.addSubview(toolBar)
         if SSPhotoKit.shared.showCancelButton {
             let title = NSLocalizedString("取消", comment:"")
-            self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: title, style: .Plain, target: self, action: Selector("dismiss"))
+            navigationItem.rightBarButtonItem = UIBarButtonItem(title: title, style: .Plain, target: self, action: Selector("dismiss"))
         }
         
         // Do any additional setup after loading the view.
@@ -47,7 +51,9 @@ public class SSPhotoGroupDetailViewController: UIViewController {
     
     
     func dismiss() {
-        self.navigationController?.dismissViewControllerAnimated(true, completion: nil)
+        self.navigationController?.dismissViewControllerAnimated(true, completion: { () -> Void in
+            SSPhotoKit.clear()
+        })
     }
 
     override public func didReceiveMemoryWarning() {
@@ -57,9 +63,17 @@ public class SSPhotoGroupDetailViewController: UIViewController {
     
     public func config(aGroup: PHAssetCollection) {
         group = aGroup
-        self.navigationItem.title = aGroup.localizedTitle
+        updateTitle()
     }
-
+    
+    private func updateTitle() {
+        let left = SSPhotoKit.shared.maximumNumberOfSelection - selectedAssets.count
+        var title = NSLocalizedString("还能选择\(left)张", comment:"")
+        if left == 0 {
+            title = NSLocalizedString("选择完成", comment:"")
+        }
+        navigationItem.title = title
+    }
 }
 // MARK: - UI
 extension SSPhotoGroupDetailViewController {
@@ -187,10 +201,6 @@ extension SSPhotoGroupDetailViewController: UICollectionViewDataSource, UICollec
             title = prefix
         }
         selectedButton.setTitle(title, forState: .Normal)
-    }
-    
-    public func collectionView(collectionView: UICollectionView, didDeselectItemAtIndexPath indexPath: NSIndexPath) {
-        
     }
     
     // MARK: - UICollectionViewDelegateFlowLayout
