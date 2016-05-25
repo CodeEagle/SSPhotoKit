@@ -38,7 +38,7 @@ public class SSPhotoAssetController: UINavigationController {
         let collectionView = SSPhotoAssetsGroupController()
         self.init(rootViewController: collectionView)
     }
-    
+
     override public init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
     }
@@ -58,7 +58,7 @@ public class SSPhotoAssetController: UINavigationController {
         
         if SSPhotoKit.shared.showCancelButton {
             let title = NSLocalizedString("取消", comment:"")
-            self.navigationBar.topItem?.rightBarButtonItem = UIBarButtonItem(title: title, style: .Plain, target: self, action: Selector("dismiss"))
+            self.navigationBar.topItem?.rightBarButtonItem = UIBarButtonItem(title: title, style: .Plain, target: self, action: #selector(dismiss))
         }
     }
     

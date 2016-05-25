@@ -8,8 +8,14 @@
 
 #import "_ASCoreAnimationExtras.h"
 #import "_ASAsyncTransaction.h"
+#import "_ASDisplayLayer.h"
 #import "ASAssert.h"
 #import "ASDisplayNodeInternal.h"
+#import "ASDisplayNode+FrameworkPrivate.h"
+#import "ASDisplayNode+Beta.h"
+
+@interface ASDisplayNode () <_ASDisplayLayerDelegate>
+@end
 
 @implementation ASDisplayNode (AsyncDisplay)
 
@@ -58,7 +64,7 @@ static void __ASDisplayLayerIncrementConcurrentDisplayCount(BOOL displayIsAsync,
  */
 static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync, BOOL isRasterizing)
 {
-  // Displays while rasterizing are not counted as concurrent displays, becuase they draw in serial when their rasterizing container displays.
+  // Displays while rasterizing are not counted as concurrent displays, because they draw in serial when their rasterizing container displays.
   if (isRasterizing) {
     return;
   }
@@ -83,10 +89,19 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
   if (self.isHidden || self.alpha <= 0.0) {
     return;
   }
+    
+  BOOL rasterizingFromAscendent = (_hierarchyState & ASHierarchyStateRasterized);
+
+  // if super node is rasterizing descendants, subnodes will not have had layout calls because they don't have layers
+  if (rasterizingFromAscendent) {
+    [self __layout];
+  }
 
   // Capture these outside the display block so they are retained.
   UIColor *backgroundColor = self.backgroundColor;
   CGRect bounds = self.bounds;
+  CGFloat cornerRadius = self.cornerRadius;
+  BOOL clipsToBounds = self.clipsToBounds;
 
   CGRect frame;
   
@@ -108,8 +123,8 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
   // Get the display block for this node.
   asyncdisplaykit_async_transaction_operation_block_t displayBlock = [self _displayBlockWithAsynchronous:NO isCancelledBlock:isCancelledBlock rasterizing:YES];
 
-  // We'll display something if there is a display block and/or a background color.
-  BOOL shouldDisplay = displayBlock || backgroundColor;
+  // We'll display something if there is a display block, clipping, translation and/or a background color.
+  BOOL shouldDisplay = displayBlock || backgroundColor || CGPointEqualToPoint(CGPointZero, frame.origin) == NO || clipsToBounds;
 
   // If we should display, then push a transform, draw the background color, and draw the contents.
   // The transform is popped in a block added after the recursion into subnodes.
@@ -120,6 +135,15 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
       CGContextSaveGState(context);
 
       CGContextTranslateCTM(context, frame.origin.x, frame.origin.y);
+
+      //support cornerRadius
+      if (rasterizingFromAscendent && clipsToBounds) {
+        if (cornerRadius) {
+          [[UIBezierPath bezierPathWithRoundedRect:bounds cornerRadius:cornerRadius] addClip];
+        } else {
+          [[UIBezierPath bezierPathWithRect:bounds] addClip];
+        }
+      }
 
       // Fill background if any.
       CGColorRef backgroundCGColor = backgroundColor.CGColor;
@@ -156,11 +180,9 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
 
 - (asyncdisplaykit_async_transaction_operation_block_t)_displayBlockWithAsynchronous:(BOOL)asynchronous isCancelledBlock:(asdisplaynode_iscancelled_block_t)isCancelledBlock rasterizing:(BOOL)rasterizing
 {
-  id nodeClass = [self class];
-
   asyncdisplaykit_async_transaction_operation_block_t displayBlock = nil;
 
-  ASDisplayNodeAssert(rasterizing || ![self __rasterizedContainerNode], @"Rasterized descendants should never display unless being drawn into the rasterized container.");
+  ASDisplayNodeAssert(rasterizing || !(_hierarchyState & ASHierarchyStateRasterized), @"Rasterized descendants should never display unless being drawn into the rasterized container.");
 
   if (!rasterizing && self.shouldRasterizeDescendants) {
     CGRect bounds = self.bounds;
@@ -203,25 +225,32 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
 
       return image;
     };
-  } else if (_flags.implementsImageDisplay) {
+  } else if (_flags.implementsInstanceImageDisplay || _flags.implementsImageDisplay) {
     // Capture drawParameters from delegate on main thread
     id drawParameters = [self drawParameters];
-
+    
     displayBlock = ^id{
       __ASDisplayLayerIncrementConcurrentDisplayCount(asynchronous, rasterizing);
       if (isCancelledBlock()) {
         __ASDisplayLayerDecrementConcurrentDisplayCount(asynchronous, rasterizing);
         return nil;
       }
-
+      
       ASDN_DELAY_FOR_DISPLAY();
-
-      UIImage *result = [nodeClass displayWithParameters:drawParameters isCancelled:isCancelledBlock];
+      
+      UIImage *result = nil;
+      //We can't call _willDisplayNodeContentWithRenderingContext or _didDisplayNodeContentWithRenderingContext because we don't
+      //have a context. We rely on implementors of displayWithParameters:isCancelled: to call
+      if (_flags.implementsInstanceImageDisplay) {
+        result = [self displayWithParameters:drawParameters isCancelled:isCancelledBlock];
+      } else {
+        result = [[self class] displayWithParameters:drawParameters isCancelled:isCancelledBlock];
+      }
       __ASDisplayLayerDecrementConcurrentDisplayCount(asynchronous, rasterizing);
       return result;
     };
-
-  } else if (_flags.implementsDrawRect) {
+    
+  } else if (_flags.implementsInstanceDrawRect || _flags.implementsDrawRect) {
 
     CGRect bounds = self.bounds;
     if (CGRectIsEmpty(bounds)) {
@@ -246,7 +275,20 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
         UIGraphicsBeginImageContextWithOptions(bounds.size, opaque, contentsScaleForDisplay);
       }
 
-      [nodeClass drawRect:bounds withParameters:drawParameters isCancelled:isCancelledBlock isRasterizing:rasterizing];
+      CGContextRef currentContext = UIGraphicsGetCurrentContext();
+      if (currentContext && _willDisplayNodeContentWithRenderingContext) {
+        _willDisplayNodeContentWithRenderingContext(currentContext);
+      }
+      
+      if (_flags.implementsInstanceDrawRect) {
+        [self drawRect:bounds withParameters:drawParameters isCancelled:isCancelledBlock isRasterizing:rasterizing];
+      } else {
+        [[self class] drawRect:bounds withParameters:drawParameters isCancelled:isCancelledBlock isRasterizing:rasterizing];
+      }
+      
+      if (currentContext && _didDisplayNodeContentWithRenderingContext) {
+        _didDisplayNodeContentWithRenderingContext(currentContext);
+      }
 
       if (isCancelledBlock()) {
         if (!rasterizing) {
@@ -278,34 +320,31 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
 
   ASDN::MutexLocker l(_propertyLock);
 
-  if ([self __rasterizedContainerNode]) {
+  if (_hierarchyState & ASHierarchyStateRasterized) {
     return;
   }
 
   // for async display, capture the current displaySentinel value to bail early when the job is executed if another is
   // enqueued
   // for sync display, just use nil for the displaySentinel and go
-  //
-  // REVIEW: what about the degenerate case where we are calling setNeedsDisplay faster than the jobs are dequeuing
-  // from the displayQueue?  do we want to put in some kind of timer to not cancel early fails from displaySentinel
-  // changes?
+  
+  // FIXME: what about the degenerate case where we are calling setNeedsDisplay faster than the jobs are dequeuing
+  // from the displayQueue?  Need to not cancel early fails from displaySentinel changes.
   ASSentinel *displaySentinel = (asynchronously ? _displaySentinel : nil);
-  int64_t displaySentinelValue = [displaySentinel increment];
+  int32_t displaySentinelValue = [displaySentinel increment];
 
   asdisplaynode_iscancelled_block_t isCancelledBlock = ^{
     return BOOL(displaySentinelValue != displaySentinel.value);
   };
 
-  // If we're participating in an ancestor's asyncTransaction, find it here
-  ASDisplayNodeAssert(_layer, @"Expect _layer to be not nil");
-  CALayer *containerLayer = _layer.asyncdisplaykit_parentTransactionContainer ?: _layer;
-  _ASAsyncTransaction *transaction = containerLayer.asyncdisplaykit_asyncTransaction;
-
   // Set up displayBlock to call either display or draw on the delegate and return a UIImage contents
   asyncdisplaykit_async_transaction_operation_block_t displayBlock = [self _displayBlockWithAsynchronous:asynchronously isCancelledBlock:isCancelledBlock rasterizing:NO];
+  
   if (!displayBlock) {
     return;
   }
+  
+  ASDisplayNodeAssert(_layer, @"Expect _layer to be not nil");
 
   // This block is called back on the main thread after rendering at the completion of the current async transaction, or immediately if !asynchronously
   asyncdisplaykit_async_transaction_operation_completion_block_t completionBlock = ^(id<NSObject> value, BOOL canceled){
@@ -323,22 +362,57 @@ static void __ASDisplayLayerDecrementConcurrentDisplayCount(BOOL displayIsAsync,
     }
   };
 
-  if (displayBlock != NULL) {
-    // Call willDisplay immediately in either case
-    [self willDisplayAsyncLayer:self.asyncLayer];
+  // Call willDisplay immediately in either case
+  [self willDisplayAsyncLayer:self.asyncLayer];
 
-    if (asynchronously) {
-      [transaction addOperationWithBlock:displayBlock queue:[_ASDisplayLayer displayQueue] completion:completionBlock];
-    } else {
-      UIImage *contents = (UIImage *)displayBlock();
-      completionBlock(contents, NO);
-    }
+  if (asynchronously) {
+    // Async rendering operations are contained by a transaction, which allows them to proceed and concurrently
+    // while synchronizing the final application of the results to the layer's contents property (completionBlock).
+    
+    // First, look to see if we are expected to join a parent's transaction container.
+    CALayer *containerLayer = _layer.asyncdisplaykit_parentTransactionContainer ? : _layer;
+    
+    // In the case that a transaction does not yet exist (such as for an individual node outside of a container),
+    // this call will allocate the transaction and add it to _ASAsyncTransactionGroup.
+    // It will automatically commit the transaction at the end of the runloop.
+    _ASAsyncTransaction *transaction = containerLayer.asyncdisplaykit_asyncTransaction;
+    
+    // Adding this displayBlock operation to the transaction will start it IMMEDIATELY.
+    // The only function of the transaction commit is to gate the calling of the completionBlock.
+    [transaction addOperationWithBlock:displayBlock priority:self.drawingPriority queue:[_ASDisplayLayer displayQueue] completion:completionBlock];
+  } else {
+    UIImage *contents = (UIImage *)displayBlock();
+    completionBlock(contents, NO);
   }
 }
 
 - (void)cancelDisplayAsyncLayer:(_ASDisplayLayer *)asyncLayer
 {
   [_displaySentinel increment];
+}
+
+- (ASDisplayNodeContextModifier)willDisplayNodeContentWithRenderingContext
+{
+  ASDN::MutexLocker l(_propertyLock);
+  return _willDisplayNodeContentWithRenderingContext;
+}
+
+- (ASDisplayNodeContextModifier)didDisplayNodeContentWithRenderingContext
+{
+  ASDN::MutexLocker l(_propertyLock);
+  return _didDisplayNodeContentWithRenderingContext;
+}
+
+- (void)setWillDisplayNodeContentWithRenderingContext:(ASDisplayNodeContextModifier)contextModifier
+{
+  ASDN::MutexLocker l(_propertyLock);
+  _willDisplayNodeContentWithRenderingContext = contextModifier;
+}
+
+- (void)setDidDisplayNodeContentWithRenderingContext:(ASDisplayNodeContextModifier)contextModifier;
+{
+  ASDN::MutexLocker l(_propertyLock);
+  _didDisplayNodeContentWithRenderingContext = contextModifier;
 }
 
 @end

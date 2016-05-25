@@ -42,7 +42,11 @@ public class SSPhotoGroupDetailViewController: UIViewController {
         view.addSubview(toolBar)
         if SSPhotoKit.shared.showCancelButton {
             let title = NSLocalizedString("取消", comment:"")
+<<<<<<< HEAD
             navigationItem.rightBarButtonItem = UIBarButtonItem(title: title, style: .Plain, target: self, action: Selector("dismiss"))
+=======
+            self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: title, style: .Plain, target: self, action: #selector(dismiss))
+>>>>>>> origin/master
         }
         
         // Do any additional setup after loading the view.
@@ -99,13 +103,13 @@ extension SSPhotoGroupDetailViewController {
     }
     
     private func toolBarItems() -> [UIBarButtonItem] {
-        let preview = UIBarButtonItem(title: NSLocalizedString("预览", comment: ""), style: UIBarButtonItemStyle.Plain, target: self, action: Selector("preview"))
+        let preview = UIBarButtonItem(title: NSLocalizedString("预览", comment: ""), style: UIBarButtonItemStyle.Plain, target: self, action: #selector(SSPhotoGroupDetailViewController.preview))
         let fixed = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.FixedSpace, target: nil, action: nil)
         fixed.width = 20
         let flex = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.FlexibleSpace, target: nil, action: nil)
         let button = UIButton(frame: CGRectMake(0, 0, 90, 50))
         button.setTitle(NSLocalizedString("选择", comment: ""), forState: .Normal)
-        button.addTarget(self, action: Selector("done"), forControlEvents: UIControlEvents.TouchUpInside)
+        button.addTarget(self, action: #selector(SSPhotoGroupDetailViewController.done), forControlEvents: UIControlEvents.TouchUpInside)
         button.setTitleColor(view.tintColor, forState: .Normal)
         button.setTitleColor(UIColor.lightGrayColor(), forState: .Highlighted)
         selectedButton = button

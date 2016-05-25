@@ -66,6 +66,7 @@ public class SSPhotoAssetsGroupController: UICollectionViewController {
 		} else {
 			dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), { () -> Void in
 //                let option = PHFetchOptions()
+<<<<<<< HEAD
 				let array: [PHAssetCollectionType] = [.SmartAlbum, .Album]
 				/*
 				 case SmartAlbumGeneric
@@ -103,6 +104,46 @@ public class SSPhotoAssetsGroupController: UICollectionViewController {
 		}
 	}
 
+=======
+                let array: [PHAssetCollectionType] = [.SmartAlbum,.Album]
+                /*
+                case SmartAlbumGeneric
+                case SmartAlbumPanoramas
+                case SmartAlbumVideos
+                case SmartAlbumFavorites
+                case SmartAlbumTimelapses
+                case SmartAlbumAllHidden
+                case SmartAlbumRecentlyAdded
+                case SmartAlbumBursts
+                case SmartAlbumSlomoVideos
+                case SmartAlbumUserLibrary
+                */
+                let subtype : [[PHAssetCollectionSubtype]] = [[.SmartAlbumUserLibrary,.SmartAlbumGeneric,.SmartAlbumPanoramas,.SmartAlbumFavorites,.SmartAlbumTimelapses,.SmartAlbumRecentlyAdded,.SmartAlbumBursts],[.AlbumRegular]]
+                for (i,item) in array.enumerate() {
+                    
+                    for (_,asubType) in subtype[i].enumerate() {
+                        let smartAlbums = PHAssetCollection.fetchAssetCollectionsWithType(item, subtype: asubType, options: nil)
+                        
+                        smartAlbums.enumerateObjectsUsingBlock({ (obj , index, stop) -> Void in
+                            if let c = obj as? PHAssetCollection {
+                                let assetsFetchResult = PHAsset.fetchAssetsInAssetCollection(c, options: nil)
+                                if let _ = assetsFetchResult.firstObject as? PHAsset {
+                                    self.assetsGroup.append(c)
+                                }
+                            }
+                        })
+                    }
+                    
+                    
+                }
+                dispatch_async(dispatch_get_main_queue(), { () -> Void in
+                    self.collectionView?.reloadData()
+                })
+            })
+        }
+    }
+    
+>>>>>>> origin/master
 }
 
 // MARK: - set up

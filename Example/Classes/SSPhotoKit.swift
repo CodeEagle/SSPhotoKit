@@ -125,16 +125,27 @@ private extension SSPhotoKit {
         
     }
     
+<<<<<<< HEAD
     func presentImagePickerController(var sourceType: UIImagePickerControllerSourceType) {
+=======
+
+    private func presentImagePickerController(sourceType: UIImagePickerControllerSourceType) {
+>>>>>>> origin/master
         if (!UIImagePickerController.isSourceTypeAvailable(sourceType)) {
-            sourceType = .PhotoLibrary
+            let alertController =  UIAlertController(title: NSLocalizedString("提示", comment: ""), message: NSLocalizedString("不支持此功能", comment: ""), preferredStyle: .Alert)
+            let confirmAction = UIAlertAction(title: NSLocalizedString("确定", comment: ""), style: .Default, handler: nil)
+            alertController.addAction(confirmAction)
+            aViewController.presentViewController(alertController, animated: true, completion: nil)
+            return
         }
+        
         if sourceType == .PhotoLibrary {
             photoPicker = SSPhotoAssetController()
             aViewController.presentViewController(photoPicker, animated: true, completion: nil)
-            return
         }
-        aViewController.presentViewController(cameraShooter, animated: true, completion: nil)
+        else {
+            aViewController.presentViewController(cameraShooter, animated: true, completion: nil)
+        }
     }
     
 }
